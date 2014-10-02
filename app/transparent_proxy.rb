@@ -42,6 +42,10 @@ class TransparentProxy
       headers.delete('Transfer-Encoding')
       headers['Content-Length'] = body.bytesize
 
+      unless (http_response.ok?)
+        STDOUT.puts "non 200 response. status line: #{http_response.status_line}. proxied address: #{proxied_uri}"
+      end
+
       {'status' => http_response.status_line, 'headers' => headers, 'body' => body}
     end
 

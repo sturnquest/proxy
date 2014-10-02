@@ -43,4 +43,8 @@ class HttpResponse
     @status_line
   end
 
+  def ok?
+    '200' == @status_line.split(' ')[1]
+  end
+
 end
