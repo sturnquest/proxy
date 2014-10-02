@@ -4,12 +4,13 @@ class Cache
     @cacheDurationSecs = attributes['cacheDurationSecs']
     @cacheSizeBytes = attributes['cacheSizeBytes']
     @cacheMaxElementCount = attributes['cacheMaxElementCount']
+    @cacheableContentTypes = attributes['cacheableContentTypes'] || ['text/html', 'text/css', 'text/xml', 'application/x-javascript', 'application/atom+xml', 'application/rss+xml', 'application/json', 'text/plain']
 
     @cache = {}
   end
 
-  #{
-  #    uri.to_s => {
+  #raw = {
+  #    '/example/url/path' => {
   #        'headers' => {},
   #        'body' => '',
   #        'timestamp' => 1
@@ -17,22 +18,17 @@ class Cache
   #}
   def fetch(uri)
 
-    now = Time.now
-    @cache.keys.each do |key|
-      timestamp = @cache[key]['timestamp']
-      if (now - Time.at(timestamp) > @cacheDurationSecs)
-        @cache.delete(key)
-      end
-    end
+    @cache.delete_if {|key, value| expired?(key)}
 
-    cached = @cache[uri.to_s]
+    results = @cache[uri.to_s]
 
-    if (cached)
-      cached
+    if (results)
+      STDOUT.puts "cache hit: #{uri.to_s}"
+      results
     else
       raw = yield(uri)
 
-      if ((raw['body'].bytesize <= @cacheSizeBytes) && (@cache.keys.size < @cacheMaxElementCount))
+      if (cacheable?(raw))
         raw['timestamp'] = Time.now.to_i
         @cache[uri.to_s] = raw
       end
@@ -42,6 +38,33 @@ class Cache
 
   end
 
+  protected
 
+  def expired?(key)
+    (Time.now - Time.at(@cache[key]['timestamp'])) > @cacheDurationSecs
+  end
+
+  def cacheable?(raw)
+    !(too_large?(raw) || too_many?) && cacheable_content_type?(raw)
+  end
+
+  def too_large?(raw)
+    raw['body'].bytesize > @cacheSizeBytes
+  end
+
+  def too_many?
+    @cache.keys.size >= @cacheMaxElementCount
+  end
+
+  def cacheable_content_type?(raw)
+    content_type = ''
+
+    if (headers = raw['headers'])
+      content_type = headers['Content-Type']
+      content_type = content_type.split(';').first if content_type
+    end
+
+    @cacheableContentTypes.include?(content_type)
+  end
 
 end

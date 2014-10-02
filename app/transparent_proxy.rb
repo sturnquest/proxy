@@ -11,7 +11,6 @@ class TransparentProxy
   def initialize(cache, attributes)
     @@cache = cache
     @proxied_base_url = attributes['proxiedBaseUrl']
-    @ignore_extensions = attributes['ignoreExtensions']
   end
 
   def serve(io)
@@ -20,14 +19,15 @@ class TransparentProxy
     uri = http_request.uri
     proxied_uri = URI("#{@proxied_base_url}#{uri.to_s}")
 
-    # ignore certain requests. e.g. chrome and firefox automatically look for a favicon.ico
-    if (@ignore_extensions.any? {|extension| proxied_uri.path.end_with?(".#{extension}")} || !http_request.get?)
+    unless (http_request.get?)
       STDOUT.puts "ignoring: #{proxied_uri}"
+      io.puts "HTTP/1.1 405 Method Not Allowed"
+      io.puts "Allow: GET"
       io.close
       return
     end
 
-    STDOUT.puts "proxied server address: #{proxied_uri}"
+    STDOUT.puts "proxied address: #{proxied_uri}"
 
     response = @@cache.fetch(uri) do
       curl_headers = headers.map {|key, value| "-H \"#{key}: #{value}\""}.join(' ')
@@ -52,6 +52,7 @@ class TransparentProxy
       io.puts "#{key}: #{value}"
     end
 
+    #http spec requires an empty line between header and response body
     io.puts
     io.puts response['body']
     io.close

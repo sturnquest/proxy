@@ -1,5 +1,6 @@
 {
     "cacheDurationSecs": 60,
     "cacheSizeBytes": 10240,
-    "cacheMaxElementCount": 2
+    "cacheMaxElementCount": 2,
+    "cacheableContentTypes": ["text/html", "text/css", "text/xml", "application/x-javascript", "application/atom+xml", "application/rss+xml", "application/json", "text/plain"]
 }
