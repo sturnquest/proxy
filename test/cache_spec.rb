@@ -1,7 +1,7 @@
 require 'app/cache'
 require 'uri'
 
-describe Cache, "cache" do
+describe Cache do
 
   let(:headers) {{'headers' => {'Content-Type' => 'text/html'}}}
 
@@ -18,7 +18,7 @@ describe Cache, "cache" do
     expect(response['body']).to(eq('load 1'))
   end
 
-  it "does not put items in the cache that are too large" do
+  it "does not put individual items in the cache that are too large" do
     cache = Cache.new({'cacheDurationSecs' => 10, 'cacheSizeBytes' => 10, 'cacheMaxElementCount' => 2})
 
     uri = URI('/size')
@@ -32,8 +32,32 @@ describe Cache, "cache" do
 
   end
 
+  it "does not allow the cache to exceed the total max size" do
+    cache = Cache.new({'cacheDurationSecs' => 10, 'cacheSizeBytes' => 10, 'cacheMaxElementCount' => 100})
+
+    3.times do |index|
+      uri = URI("/size-#{index}")
+      cache.fetch(uri) do
+        {'body' => "12#{index}"}.merge(headers)
+      end
+      response = cache.fetch(uri) do
+        {'body' => 'abc'}.merge(headers)
+      end
+      expect(response['body']).to(eq("12#{index}"))
+    end
+
+    uri = URI("/size-exceeded")
+    cache.fetch(uri) do
+      {'body' => "12x"}.merge(headers)
+    end
+    response = cache.fetch(uri) do
+      {'body' => 'abc'}.merge(headers)
+    end
+    expect(response['body']).to(eq('abc'))
+  end
+
   it "does not exceed element count capacity" do
-    cache = Cache.new({'cacheDurationSecs' => 10, 'cacheSizeBytes' => 10, 'cacheMaxElementCount' => 2})
+    cache = Cache.new({'cacheDurationSecs' => 10, 'cacheSizeBytes' => 100, 'cacheMaxElementCount' => 2})
 
     uri = URI('/first')
     cache.fetch(uri) do

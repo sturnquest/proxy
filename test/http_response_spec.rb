@@ -1,6 +1,6 @@
 require 'app/http_response'
 
-describe HttpResponse, "HttpResponse" do
+describe HttpResponse do
 
   it "parses headers correctly" do
     content = <<-eos

@@ -49,7 +49,8 @@ class Cache
   end
 
   def too_large?(raw)
-    raw['body'].bytesize > @cacheSizeBytes
+    current_total_bytes = @cache.values.reduce(0) {|sum, hash| sum + hash['body'].bytesize}
+    (current_total_bytes + raw['body'].bytesize) > @cacheSizeBytes
   end
 
   def too_many?
