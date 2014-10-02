@@ -2,6 +2,7 @@ GEM
   remote: http://rubygems.org/
   specs:
     diff-lcs (1.2.5)
+    json_pure (1.8.1)
     rspec (3.0.0)
       rspec-core (~> 3.0.0)
       rspec-expectations (~> 3.0.0)
@@ -19,4 +20,5 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  json_pure
   rspec

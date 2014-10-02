@@ -1,20 +1,30 @@
+require 'rubygems'
 require 'socket'
 require 'http_request'
 require 'http_response'
 require 'cache'
 require 'stringio'
+require 'json'
 
 class TransparentProxy
 
-  def initialize(cache)
+  def initialize(cache, attributes)
     @@cache = cache
+    @proxied_base_url = attributes['proxiedBaseUrl']
+    @ignore_extensions = attributes['ignoreExtensions']
   end
 
   def serve(io)
     http_request = HttpRequest.build(io)
     headers = http_request.headers
     uri = http_request.uri
-    proxied_uri = URI("http://test.bahamago.com#{uri.to_s}")
+    proxied_uri = URI("#{@proxied_base_url}#{uri.to_s}")
+
+    if (@ignore_extensions.any? {|extension| proxied_uri.path.end_with?(".#{extension}")})
+      STDOUT.puts "ignoring: #{proxied_uri}"
+      io.close
+      return
+    end
 
     STDOUT.puts "proxied server address: #{proxied_uri}"
 
@@ -50,8 +60,8 @@ class TransparentProxy
 end
 
 proxy_server = TCPServer.new 2000
-cache = Cache.new({'cacheDurationSecs' => 60, 'cacheSizeBytes' => (1024 * 10), 'cacheMaxElementCount' => 2})
-proxy = TransparentProxy.new(cache)
+cache = Cache.new(JSON.load(IO.read('cache.json')))
+proxy = TransparentProxy.new(cache, JSON.load(IO.read('proxy.json')))
 
 loop do
   Thread.start(proxy_server.accept) do |io|

@@ -1,0 +1,4 @@
+{
+    "proxiedBaseUrl": "http://test.bahamago.com",
+    "ignoreExtensions": ["ico"]
+}

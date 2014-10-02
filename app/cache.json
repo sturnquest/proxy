@@ -1,0 +1,5 @@
+{
+    "cacheDurationSecs": 60,
+    "cacheSizeBytes": 10240,
+    "cacheMaxElementCount": 2
+}
