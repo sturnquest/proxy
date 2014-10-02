@@ -20,6 +20,7 @@ class TransparentProxy
     uri = http_request.uri
     proxied_uri = URI("#{@proxied_base_url}#{uri.to_s}")
 
+    # ignore certain requests. e.g. chrome and firefox automatically look for a favicon.ico
     if (@ignore_extensions.any? {|extension| proxied_uri.path.end_with?(".#{extension}")})
       STDOUT.puts "ignoring: #{proxied_uri}"
       io.close
