@@ -16,23 +16,33 @@ class TransparentProxy
     uri = http_request.uri
     proxied_uri = URI("http://test.bahamago.com#{uri.to_s}")
 
-    curl_headers = headers.map {|key, value| "-H \"#{key}: #{value}\""}.join(' ')
-    response = `curl -i #{curl_headers} '#{proxied_uri}'`
+    STDOUT.puts "proxied server address: #{proxied_uri}"
 
-    stream = StringIO.new(response)
-    http_response = HttpResponse.build(stream)
+    response = @@cache.fetch(uri) do
+      curl_headers = headers.map {|key, value| "-H \"#{key}: #{value}\""}.join(' ')
+      curl_response = `curl -i #{curl_headers} '#{proxied_uri}'`
 
-    io.puts http_response.status_line
-    headers = http_response.headers
-    #replace chunked transfer encoding with the content length since our proxy does not chunk
-    headers.delete('Transfer-Encoding')
-    headers['Content-Length'] = http_response.body.bytesize
+      stream = StringIO.new(curl_response)
+      http_response = HttpResponse.build(stream)
+      headers = http_response.headers
+      body = http_response.body
+
+      #replace chunked transfer encoding with the content length since our proxy does not chunk
+      headers.delete('Transfer-Encoding')
+      headers['Content-Length'] = body.bytesize
+
+      {'status' => http_response.status_line, 'headers' => headers, 'body' => body}
+    end
+
+    io.puts response['status']
+    headers = response['headers']
+
     headers.map do |key, value|
       io.puts "#{key}: #{value}"
     end
 
     io.puts
-    io.puts http_response.body
+    io.puts response['body']
     io.close
   end
 
@@ -40,7 +50,7 @@ class TransparentProxy
 end
 
 proxy_server = TCPServer.new 2000
-cache = Cache.new({'cacheDurationSecs' => 120, 'cacheSizeBytes' => (1024 * 10), 'cacheMaxElementCount' => 10})
+cache = Cache.new({'cacheDurationSecs' => 60, 'cacheSizeBytes' => (1024 * 10), 'cacheMaxElementCount' => 2})
 proxy = TransparentProxy.new(cache)
 
 loop do
