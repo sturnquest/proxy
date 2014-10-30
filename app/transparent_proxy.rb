@@ -1,8 +1,8 @@
 require 'rubygems'
 require 'socket'
-require 'http_request'
-require 'http_response'
-require 'cache'
+require File.join(File.dirname(__FILE__), 'http_request')
+require File.join(File.dirname(__FILE__), 'http_response')
+require File.join(File.dirname(__FILE__), 'cache')
 require 'stringio'
 require 'json'
 
@@ -66,8 +66,8 @@ class TransparentProxy
 end
 
 proxy_server = TCPServer.new 2000
-cache = Cache.new(JSON.load(IO.read('cache.json')))
-proxy = TransparentProxy.new(cache, JSON.load(IO.read('proxy.json')))
+cache = Cache.new(JSON.load(IO.read(File.join(File.dirname(__FILE__), 'cache.json'))))
+proxy = TransparentProxy.new(cache, JSON.load(IO.read(File.join(File.dirname(__FILE__), 'proxy.json'))))
 
 loop do
   Thread.start(proxy_server.accept) do |io|

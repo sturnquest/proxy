@@ -1,5 +1,3 @@
-require 'uri'
-
 class HttpResponse
 
   def initialize(status_line, headers, body)
