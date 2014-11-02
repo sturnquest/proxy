@@ -9,6 +9,10 @@ class Cache
     @cache = {}
   end
 
+  def clear
+    @cache.clear
+  end
+
   #raw = {
   #    '/example/url/path' => {
   #        'headers' => {},
@@ -61,7 +65,7 @@ class Cache
     content_type = ''
 
     if (headers = raw['headers'])
-      content_type = headers['Content-Type']
+      content_type = headers['Content-Type'] || headers['content-type']
       content_type = content_type.split(';').first if content_type
     end
 

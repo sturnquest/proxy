@@ -27,6 +27,14 @@ class TransparentProxy
       return
     end
 
+    if (uri.to_s.include?('cache'))
+      @@cache.clear
+      STDOUT.puts "clearing cache"
+      io.puts "HTTP/1.1 204"
+      io.close
+      return
+    end
+
     STDOUT.puts "proxied address: #{proxied_uri}"
 
     response = @@cache.fetch(uri) do
